@@ -14,17 +14,17 @@ JWT authentication, and full CRUD operations.
 
 ## Features Implemented
 
-- ✅ JWT-based authentication with protected routes
-- ✅ Login page with test credentials
-- ✅ Dashboard with live pipeline statistics
-- ✅ Full lead CRUD — create, view, edit, delete
-- ✅ Lead status management (New → Contacted → Qualified → Proposal Sent → Won / Lost)
-- ✅ Notes system — add and view notes per lead
-- ✅ Status history timeline — tracks every status change with who changed it and when
-- ✅ Search leads by name, company, or email
-- ✅ Filter leads by status, lead source, and assigned salesperson
-- ✅ Responsive UI with dark theme and glassmorphism design
-- ✅ Landing page introducing the product
+- JWT-based authentication with protected routes
+- Login page with test credentials
+- Dashboard with live pipeline statistics
+- Full lead CRUD — create, view, edit, delete
+- Lead status management (New → Contacted → Qualified → Proposal Sent → Won / Lost)
+- Notes system — add and view notes per lead
+- Status history timeline — tracks every status change with who changed it and when
+- Search leads by name, company, or email
+- Filter leads by status, lead source, and assigned salesperson
+- Responsive UI with dark theme and glassmorphism design
+- Landing page introducing the product
 
 ---
 
