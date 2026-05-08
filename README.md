@@ -44,11 +44,13 @@ You will need to run both concurrently.
    npm install
    ```
 3. Set up your environment variables by creating a `.env` file:
+
    ```env
    DATABASE_URL="mysql://root:yourpassword@localhost:3306/leadbase_db"
-   JWT_SECRET="your_super_secret_jwt_key"
+
    PORT=5000
    ```
+
 4. Push the Prisma schema to create the database tables and generate the client:
    ```bash
    npx prisma db push
@@ -88,7 +90,7 @@ You will need to run both concurrently.
 
 ---
 
-## 🧠 Design Decisions & Assumptions
+## Design Decisions & Assumptions
 
 - **Aesthetics & UI/UX**: I prioritized a premium, dark-themed interface with glass-morphism effects and micro-animations. A CRM should not only be functional but also a joy to use. The layout utilizes a fixed sidebar and a responsive grid to ensure data is scannable.
 - **Relational Database**: I chose MySQL over NoSQL because CRM data is inherently relational. A Lead belongs to a User, has many Notes, and has a Status History. Relational integrity is critical here.
@@ -96,12 +98,3 @@ You will need to run both concurrently.
 - **Custom JWT Authentication**: Instead of using heavy third-party providers (like NextAuth or Auth0), I implemented a lightweight, custom JWT authentication flow via the Express backend to demonstrate my understanding of token-based security, middleware protection, and password hashing.
 
 ---
-
-## 🔮 What I Would Add With More Time
-
-If given more time to expand this CRM, I would implement the following features:
-
-1.  **Role-Based Access Control (RBAC)**: Currently, the Admin and Salespersons share the same view. I would restrict Salespersons so they can only view and edit leads assigned to them, while Admins get a bird's-eye view of all pipeline data.
-2.  **Advanced Analytics**: Integrate a charting library (like Recharts) on the Dashboard to show visual trends, such as "Revenue Won per Month" or "Leads by Source" pie charts.
-3.  **Kanban Board View**: Add a Trello-style drag-and-drop Kanban board for managing the pipeline visually, rather than just using a list view.
-4.  **Email Integration**: Allow users to click on an email address and trigger an automated follow-up email directly through the CRM via an API like Resend or SendGrid.
