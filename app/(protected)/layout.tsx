@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, Users, LogOut, Zap } from "lucide-react";
@@ -11,6 +12,14 @@ export default function ProtectedLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("leadbase_user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
 
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -18,8 +27,9 @@ export default function ProtectedLayout({
   ];
 
   const handleLogout = () => {
-    // TODO: Clear auth tokens when implemented
-    router.push("/");
+    localStorage.removeItem("leadbase_token");
+    localStorage.removeItem("leadbase_user");
+    router.push("/login");
   };
 
   return (
@@ -58,12 +68,12 @@ export default function ProtectedLayout({
         {/* User Info & Logout */}
         <div className="p-4 border-t border-sidebarBorder">
           <div className="flex items-center gap-3 px-3 py-2">
-            <div className="w-9 h-9 rounded-full bg-primary-600 flex items-center justify-center text-white font-bold text-sm shadow-inner">
-              AD
+            <div className="w-9 h-9 rounded-full bg-primary-600 flex items-center justify-center text-white font-bold text-sm shadow-inner uppercase">
+              {user?.name?.substring(0, 2) || "U"}
             </div>
             <div className="flex flex-col flex-1 min-w-0">
-              <span className="text-sm font-medium text-white truncate">Admin User</span>
-              <span className="text-xs text-zinc-500 truncate">admin@example.com</span>
+              <span className="text-sm font-medium text-white truncate">{user?.name || "Loading..."}</span>
+              <span className="text-xs text-zinc-500 truncate">{user?.email || ""}</span>
             </div>
           </div>
           <button
