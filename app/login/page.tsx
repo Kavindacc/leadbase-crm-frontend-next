@@ -7,20 +7,38 @@ import { Zap, ArrowLeft } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("admin@example.com");
-  const [password, setPassword] = useState("password123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  const [error, setError] = useState("");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError("");
     
-    // TODO: Implement actual API login
-    // Simulating network request
-    setTimeout(() => {
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+      
+      const data = await res.json();
+      
+      if (res.ok) {
+        localStorage.setItem("leadbase_token", data.token);
+        localStorage.setItem("leadbase_user", JSON.stringify({ name: data.name, email: data.email, role: data.role }));
+        router.push("/dashboard");
+      } else {
+        setError(data.message || "Login failed");
+        setIsLoading(false);
+      }
+    } catch (err) {
+      setError("Server unreachable. Please ensure the backend is running.");
       setIsLoading(false);
-      router.push("/dashboard");
-    }, 1000);
+    }
   };
 
   return (
@@ -42,6 +60,12 @@ export default function LoginPage() {
           <h1 className="text-2xl font-bold tracking-tight text-white">Welcome back</h1>
           <p className="text-zinc-400 text-sm mt-2">Sign in to your LeadBase account</p>
         </div>
+
+        {error && (
+          <div className="mb-6 p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm font-medium text-center">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="space-y-4">

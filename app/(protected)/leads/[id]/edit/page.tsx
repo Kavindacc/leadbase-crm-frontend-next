@@ -11,6 +11,7 @@ export default function EditLeadPage({ params }: { params: Promise<{ id: string 
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
+  const [salespersons, setSalespersons] = useState<any[]>([]);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -25,37 +26,78 @@ export default function EditLeadPage({ params }: { params: Promise<{ id: string 
   });
 
   useEffect(() => {
-    // Simulate fetching lead data
-    const timer = setTimeout(() => {
-      setFormData({
-        leadName: "Bob Smith",
-        email: "bob@growthlabs.io",
-        source: "Referral",
-        status: "Qualified",
-        companyName: "Growth Labs",
-        phone: "+1 (555) 123-4567",
-        salesperson: "1",
-        dealValue: "45000"
-      });
-      setIsFetching(false);
-    }, 500);
+    const fetchLeadData = async () => {
+      const token = localStorage.getItem("leadbase_token");
+      try {
+        const res = await fetch(`http://localhost:5000/api/leads/${resolvedParams.id}`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const lead = await res.json();
+          setFormData({
+            leadName: lead.leadName || "",
+            email: lead.email || "",
+            source: lead.leadSource || "Website",
+            status: lead.status || "New",
+            companyName: lead.companyName || "",
+            phone: lead.phone || "",
+            salesperson: lead.assignedTo?.toString() || "1",
+            dealValue: lead.dealValue?.toString() || "0"
+          });
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsFetching(false);
+      }
+    };
 
-    return () => clearTimeout(timer);
-  }, []);
+    const fetchUsers = async () => {
+      const token = localStorage.getItem("leadbase_token");
+      try {
+        const res = await fetch("http://localhost:5000/api/auth/users", {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.ok) {
+          setSalespersons(await res.json());
+        }
+      } catch (err) {
+        console.error("Failed to fetch users");
+      }
+    };
+
+    fetchLeadData();
+    fetchUsers();
+  }, [resolvedParams.id]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { id, value } = e.target;
     setFormData(prev => ({ ...prev, [id]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulating API call
-    setTimeout(() => {
+    
+    const token = localStorage.getItem("leadbase_token");
+    try {
+      const res = await fetch(`http://localhost:5000/api/leads/${resolvedParams.id}`, {
+        method: "PUT",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(formData)
+      });
+      
+      if (res.ok) {
+        router.push(`/leads/${resolvedParams.id}`);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
       setIsLoading(false);
-      router.push(`/leads/${resolvedParams.id}`);
-    }, 1000);
+    }
   };
 
   if (isFetching) {
@@ -192,8 +234,10 @@ export default function EditLeadPage({ params }: { params: Promise<{ id: string 
                     onChange={handleChange}
                     className="w-full h-11 px-4 rounded-lg bg-black/20 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-primary-500/50 transition-all appearance-none"
                   >
-                    <option value="1">Admin User</option>
-                    <option value="2">Jane Doe</option>
+                    {salespersons.map(user => (
+                      <option key={user.id} value={user.id}>{user.name}</option>
+                    ))}
+                    {salespersons.length === 0 && <option value="1">Admin User</option>}
                   </select>
                 </div>
 

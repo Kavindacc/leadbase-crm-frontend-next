@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
@@ -9,15 +9,51 @@ import { ArrowLeft, Save } from "lucide-react";
 export default function CreateLeadPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [salespersons, setSalespersons] = useState<any[]>([]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    const fetchUsers = async () => {
+      const token = localStorage.getItem("leadbase_token");
+      try {
+        const res = await fetch("http://localhost:5000/api/auth/users", {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.ok) {
+          setSalespersons(await res.json());
+        }
+      } catch (err) {
+        console.error("Failed to fetch users");
+      }
+    };
+    fetchUsers();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulating API call
-    setTimeout(() => {
+    
+    const formData = new FormData(e.currentTarget);
+    const data = Object.fromEntries(formData.entries());
+    
+    const token = localStorage.getItem("leadbase_token");
+    try {
+      const res = await fetch("http://localhost:5000/api/leads", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(data)
+      });
+      
+      if (res.ok) {
+        router.push("/leads");
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
       setIsLoading(false);
-      router.push("/leads");
-    }, 1000);
+    }
   };
 
   return (
@@ -46,7 +82,7 @@ export default function CreateLeadPage() {
                     Lead Name <span className="text-rose-500">*</span>
                   </label>
                   <input
-                    id="leadName"
+                    name="leadName"
                     type="text"
                     required
                     placeholder="e.g. John Doe"
@@ -59,7 +95,7 @@ export default function CreateLeadPage() {
                     Email Address <span className="text-rose-500">*</span>
                   </label>
                   <input
-                    id="email"
+                    name="email"
                     type="email"
                     required
                     placeholder="john@example.com"
@@ -72,7 +108,7 @@ export default function CreateLeadPage() {
                     Lead Source
                   </label>
                   <select
-                    id="source"
+                    name="leadSource"
                     className="w-full h-11 px-4 rounded-lg bg-black/20 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-primary-500/50 transition-all appearance-none"
                   >
                     <option value="Website">Website</option>
@@ -88,7 +124,7 @@ export default function CreateLeadPage() {
                     Status
                   </label>
                   <select
-                    id="status"
+                    name="status"
                     className="w-full h-11 px-4 rounded-lg bg-black/20 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-primary-500/50 transition-all appearance-none"
                   >
                     <option value="New">New</option>
@@ -108,7 +144,7 @@ export default function CreateLeadPage() {
                     Company Name <span className="text-rose-500">*</span>
                   </label>
                   <input
-                    id="companyName"
+                    name="companyName"
                     type="text"
                     required
                     placeholder="e.g. Acme Corp"
@@ -121,7 +157,7 @@ export default function CreateLeadPage() {
                     Phone Number
                   </label>
                   <input
-                    id="phone"
+                    name="phone"
                     type="tel"
                     placeholder="+1 (555) 000-0000"
                     className="w-full h-11 px-4 rounded-lg bg-black/20 border border-white/10 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-primary-500/50 transition-all"
@@ -133,11 +169,13 @@ export default function CreateLeadPage() {
                     Assigned Salesperson
                   </label>
                   <select
-                    id="salesperson"
+                    name="salesperson"
                     className="w-full h-11 px-4 rounded-lg bg-black/20 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-primary-500/50 transition-all appearance-none"
                   >
-                    <option value="1">Admin User</option>
-                    <option value="2">Jane Doe</option>
+                    {salespersons.map(user => (
+                      <option key={user.id} value={user.id}>{user.name}</option>
+                    ))}
+                    {salespersons.length === 0 && <option value="1">Admin User</option>}
                   </select>
                 </div>
 
@@ -146,7 +184,7 @@ export default function CreateLeadPage() {
                     Estimated Deal Value ($)
                   </label>
                   <input
-                    id="dealValue"
+                    name="dealValue"
                     type="number"
                     min="0"
                     step="100"

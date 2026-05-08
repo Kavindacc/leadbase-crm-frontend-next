@@ -1,27 +1,20 @@
+"use client";
+
 import { PageHeader } from "@/components/PageHeader";
+import { useState, useEffect } from "react";
 import { Users, UserPlus, Star, Trophy, XCircle, DollarSign, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 // Mock Data
 const stats = [
-  { name: "Total Leads", value: "124", icon: Users, color: "text-blue-500", bg: "bg-blue-500/10" },
-  { name: "New Leads", value: "32", icon: UserPlus, color: "text-purple-500", bg: "bg-purple-500/10" },
-  { name: "Qualified", value: "45", icon: Star, color: "text-amber-500", bg: "bg-amber-500/10" },
-  { name: "Won Deals", value: "28", icon: Trophy, color: "text-emerald-500", bg: "bg-emerald-500/10" },
-  { name: "Lost Deals", value: "19", icon: XCircle, color: "text-rose-500", bg: "bg-rose-500/10" },
+  { name: "Total Leads", key: "totalLeads", icon: Users, color: "text-blue-500", bg: "bg-blue-500/10" },
+  { name: "New Leads", key: "newLeads", icon: UserPlus, color: "text-purple-500", bg: "bg-purple-500/10" },
+  { name: "Qualified", key: "qualifiedLeads", icon: Star, color: "text-amber-500", bg: "bg-amber-500/10" },
+  { name: "Won Deals", key: "wonLeads", icon: Trophy, color: "text-emerald-500", bg: "bg-emerald-500/10" },
+  { name: "Lost Deals", key: "lostLeads", icon: XCircle, color: "text-rose-500", bg: "bg-rose-500/10" },
 ];
 
-const financialStats = [
-  { name: "Total Pipeline Value", value: "$1,245,000", icon: DollarSign, trend: "+12.5%" },
-  { name: "Won Deal Value", value: "$384,500", icon: DollarSign, trend: "+8.2%" },
-];
-
-const recentLeads = [
-  { id: 1, name: "Alice Freeman", company: "TechFlow Inc", status: "New", value: "$12,000", date: "2 hours ago" },
-  { id: 2, name: "Bob Smith", company: "Growth Labs", status: "Qualified", value: "$45,000", date: "5 hours ago" },
-  { id: 3, name: "Charlie Davis", company: "Venture Corp", status: "Proposal Sent", value: "$8,500", date: "1 day ago" },
-  { id: 4, name: "Diana Prince", company: "Amazon", status: "Won", value: "$120,000", date: "2 days ago" },
-];
 
 const statusColors: Record<string, string> = {
   "New": "bg-blue-500/10 text-blue-400 border-blue-500/20",
@@ -33,6 +26,59 @@ const statusColors: Record<string, string> = {
 };
 
 export default function DashboardPage() {
+  const router = useRouter();
+  const [dashboardData, setDashboardData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      const token = localStorage.getItem("leadbase_token");
+      if (!token) {
+        router.push("/login");
+        return;
+      }
+
+      try {
+        const res = await fetch("http://localhost:5000/api/dashboard", {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setDashboardData(data);
+        } else if (res.status === 401) {
+          localStorage.removeItem("leadbase_token");
+          router.push("/login");
+        }
+      } catch (error) {
+        console.error("Failed to fetch dashboard data", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboard();
+  }, [router]);
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col min-h-full pb-10 items-center justify-center">
+        <div className="w-8 h-8 border-4 border-white/10 border-t-primary-500 rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  // Fallbacks if data is not loaded yet
+  const dStats = dashboardData?.stats || {
+    totalLeads: 0, newLeads: 0, qualifiedLeads: 0, wonLeads: 0, lostLeads: 0, totalPipelineValue: 0, wonDealValue: 0
+  };
+  const rLeads = dashboardData?.recentLeads || [];
+
+  const financialStats = [
+    { name: "Total Pipeline Value", value: `$${dStats.totalPipelineValue.toLocaleString()}`, icon: DollarSign, trend: "+12.5%" },
+    { name: "Won Deal Value", value: `$${dStats.wonDealValue.toLocaleString()}`, icon: DollarSign, trend: "+8.2%" },
+  ];
   return (
     <div className="flex flex-col min-h-full">
       <PageHeader 
@@ -74,7 +120,7 @@ export default function DashboardPage() {
               <div className={`w-10 h-10 rounded-xl ${stat.bg} ${stat.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
                 <stat.icon className="w-5 h-5" />
               </div>
-              <p className="text-3xl font-bold text-white tracking-tight mb-1">{stat.value}</p>
+              <p className="text-3xl font-bold text-white tracking-tight mb-1">{dStats[stat.key as keyof typeof dStats] || "0"}</p>
               <p className="text-sm font-medium text-zinc-400">{stat.name}</p>
             </div>
           ))}
@@ -100,7 +146,7 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {recentLeads.map((lead) => (
+                {rLeads.length > 0 ? rLeads.map((lead: any) => (
                   <tr key={lead.id} className="hover:bg-white/[0.02] transition-colors group cursor-pointer">
                     <td className="px-6 py-4 font-medium text-white group-hover:text-primary-400 transition-colors">
                       {lead.name}
@@ -114,7 +160,13 @@ export default function DashboardPage() {
                     <td className="px-6 py-4 font-medium text-zinc-300">{lead.value}</td>
                     <td className="px-6 py-4 text-zinc-500">{lead.date}</td>
                   </tr>
-                ))}
+                )) : (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-8 text-center text-zinc-500">
+                      No recent leads found.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

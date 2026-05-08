@@ -1,18 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
 import { Search, Filter, MoreHorizontal, Edit, Trash2, Eye } from "lucide-react";
 
-// Mock Data
-const mockLeads = [
-  { id: 1, name: "Alice Freeman", company: "TechFlow Inc", email: "alice@techflow.com", source: "Website", status: "New", salesperson: "Admin User", value: "$12,000", date: "2026-05-08" },
-  { id: 2, name: "Bob Smith", company: "Growth Labs", email: "bob@growthlabs.io", source: "Referral", status: "Qualified", salesperson: "Admin User", value: "$45,000", date: "2026-05-07" },
-  { id: 3, name: "Charlie Davis", company: "Venture Corp", email: "charlie@venture.com", source: "Cold Email", status: "Proposal Sent", salesperson: "Admin User", value: "$8,500", date: "2026-05-06" },
-  { id: 4, name: "Diana Prince", company: "Amazon", email: "diana@amazon.com", source: "LinkedIn", status: "Won", salesperson: "Jane Doe", value: "$120,000", date: "2026-05-05" },
-  { id: 5, name: "Evan Wright", company: "Stark Industries", email: "evan@stark.com", source: "Event", status: "Lost", salesperson: "Jane Doe", value: "$55,000", date: "2026-05-04" },
-];
 
 const statusColors: Record<string, string> = {
   "New": "bg-blue-500/10 text-blue-400 border-blue-500/20",
@@ -24,8 +16,63 @@ const statusColors: Record<string, string> = {
 };
 
 export default function LeadsPage() {
+  const [leads, setLeads] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [sourceFilter, setSourceFilter] = useState("All");
+
+  useEffect(() => {
+    const fetchLeads = async () => {
+      const token = localStorage.getItem("leadbase_token");
+      try {
+        const res = await fetch("http://localhost:5000/api/leads", {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setLeads(data);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchLeads();
+  }, []);
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this lead?")) return;
+    
+    const token = localStorage.getItem("leadbase_token");
+    try {
+      const res = await fetch(`http://localhost:5000/api/leads/${id}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setLeads(leads.filter(l => l.id !== id));
+      }
+    } catch (err) {
+      console.error("Delete failed", err);
+    }
+  };
+
+  const filteredLeads = leads.filter(lead => {
+    const name = lead.name || "";
+    const company = lead.company || "";
+    const email = lead.email || "";
+    const source = lead.source || "";
+
+    const matchesSearch = name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          company.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "All" || lead.status === statusFilter;
+    const matchesSource = sourceFilter === "All" || source === sourceFilter;
+    
+    return matchesSearch && matchesStatus && matchesSource;
+  });
 
   return (
     <div className="flex flex-col min-h-full pb-10">
@@ -68,6 +115,8 @@ export default function LeadsPage() {
               <option value="Lost">Lost</option>
             </select>
             <select 
+              value={sourceFilter}
+              onChange={(e) => setSourceFilter(e.target.value)}
               className="h-10 px-4 rounded-lg bg-panel border border-white/10 text-zinc-300 focus:outline-none focus:ring-2 focus:ring-primary-500/50 transition-all text-sm appearance-none pr-8 cursor-pointer"
               style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'16\' height=\'16\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23a1a1aa\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'m6 9 6 6 6-6\'/%3E%3C/svg%3E")', backgroundPosition: 'right 0.75rem center', backgroundRepeat: 'no-repeat' }}
             >
@@ -75,11 +124,9 @@ export default function LeadsPage() {
               <option value="Website">Website</option>
               <option value="Referral">Referral</option>
               <option value="LinkedIn">LinkedIn</option>
+              <option value="Cold Email">Cold Email</option>
+              <option value="Event">Event</option>
             </select>
-            <button className="h-10 px-4 rounded-lg bg-panel border border-white/10 text-zinc-300 hover:bg-white/5 transition-all text-sm font-medium flex items-center gap-2">
-              <Filter className="w-4 h-4" />
-              More Filters
-            </button>
           </div>
         </div>
 
@@ -98,7 +145,9 @@ export default function LeadsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {mockLeads.map((lead) => (
+                {isLoading ? (
+                  <tr><td colSpan={6} className="px-6 py-8 text-center text-zinc-500">Loading leads...</td></tr>
+                ) : filteredLeads.map((lead) => (
                   <tr key={lead.id} className="hover:bg-white/[0.02] transition-colors group">
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
@@ -113,10 +162,10 @@ export default function LeadsPage() {
                     </td>
                     <td className="px-6 py-4 text-zinc-400">{lead.source}</td>
                     <td className="px-6 py-4 text-zinc-400 flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-primary-600/20 text-primary-400 flex items-center justify-center text-[10px] font-bold">
-                        {lead.salesperson.substring(0, 2).toUpperCase()}
+                      <div className="w-6 h-6 rounded-full bg-primary-600/20 text-primary-400 flex items-center justify-center text-[10px] font-bold uppercase">
+                        {lead.salesperson?.substring(0, 2) || "?"}
                       </div>
-                      {lead.salesperson}
+                      {lead.salesperson || "Unknown"}
                     </td>
                     <td className="px-6 py-4 font-medium text-zinc-300">{lead.value}</td>
                     <td className="px-6 py-4 text-right">
@@ -127,7 +176,7 @@ export default function LeadsPage() {
                         <Link href={`/leads/${lead.id}/edit`} className="p-2 text-zinc-400 hover:text-primary-400 hover:bg-primary-500/10 rounded-lg transition-colors">
                           <Edit className="w-4 h-4" />
                         </Link>
-                        <button className="p-2 text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors">
+                        <button onClick={() => handleDelete(lead.id)} className="p-2 text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>

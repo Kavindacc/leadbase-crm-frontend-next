@@ -87,8 +87,7 @@ export default function LandingPage() {
 
       <footer className="w-full py-8 flex items-center justify-center border-t border-white/10 bg-zinc-950">
         <p className="text-sm text-zinc-500 flex items-center gap-1">
-          © 2026 LeadBase CRM. Built for Touch Labs.
-        </p>
+          © 2026 LeadBase CRM. Build By Kavinda Chandrasiri        </p>
       </footer>
     </div>
   );
