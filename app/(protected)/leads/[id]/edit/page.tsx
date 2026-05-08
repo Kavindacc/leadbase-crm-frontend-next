@@ -25,37 +25,62 @@ export default function EditLeadPage({ params }: { params: Promise<{ id: string 
   });
 
   useEffect(() => {
-    // Simulate fetching lead data
-    const timer = setTimeout(() => {
-      setFormData({
-        leadName: "Bob Smith",
-        email: "bob@growthlabs.io",
-        source: "Referral",
-        status: "Qualified",
-        companyName: "Growth Labs",
-        phone: "+1 (555) 123-4567",
-        salesperson: "1",
-        dealValue: "45000"
-      });
-      setIsFetching(false);
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, []);
+    const fetchLeadData = async () => {
+      const token = localStorage.getItem("leadbase_token");
+      try {
+        const res = await fetch(`http://localhost:5000/api/leads/${resolvedParams.id}`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const lead = await res.json();
+          setFormData({
+            leadName: lead.leadName || "",
+            email: lead.email || "",
+            source: lead.leadSource || "Website",
+            status: lead.status || "New",
+            companyName: lead.companyName || "",
+            phone: lead.phone || "",
+            salesperson: lead.assignedTo?.toString() || "1",
+            dealValue: lead.dealValue?.toString() || "0"
+          });
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsFetching(false);
+      }
+    };
+    fetchLeadData();
+  }, [resolvedParams.id]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { id, value } = e.target;
     setFormData(prev => ({ ...prev, [id]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulating API call
-    setTimeout(() => {
+    
+    const token = localStorage.getItem("leadbase_token");
+    try {
+      const res = await fetch(`http://localhost:5000/api/leads/${resolvedParams.id}`, {
+        method: "PUT",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(formData)
+      });
+      
+      if (res.ok) {
+        router.push(`/leads/${resolvedParams.id}`);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
       setIsLoading(false);
-      router.push(`/leads/${resolvedParams.id}`);
-    }, 1000);
+    }
   };
 
   if (isFetching) {

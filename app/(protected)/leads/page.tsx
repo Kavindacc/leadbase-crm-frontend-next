@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
 import { Search, Filter, MoreHorizontal, Edit, Trash2, Eye } from "lucide-react";
@@ -24,8 +24,55 @@ const statusColors: Record<string, string> = {
 };
 
 export default function LeadsPage() {
+  const [leads, setLeads] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+
+  useEffect(() => {
+    const fetchLeads = async () => {
+      const token = localStorage.getItem("leadbase_token");
+      try {
+        const res = await fetch("http://localhost:5000/api/leads", {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setLeads(data);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchLeads();
+  }, []);
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this lead?")) return;
+    
+    const token = localStorage.getItem("leadbase_token");
+    try {
+      const res = await fetch(`http://localhost:5000/api/leads/${id}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setLeads(leads.filter(l => l.id !== id));
+      }
+    } catch (err) {
+      console.error("Delete failed", err);
+    }
+  };
+
+  const filteredLeads = leads.filter(lead => {
+    const matchesSearch = lead.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          lead.company.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          lead.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "All" || lead.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <div className="flex flex-col min-h-full pb-10">
@@ -98,7 +145,9 @@ export default function LeadsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {mockLeads.map((lead) => (
+                {isLoading ? (
+                  <tr><td colSpan={6} className="px-6 py-8 text-center text-zinc-500">Loading leads...</td></tr>
+                ) : filteredLeads.map((lead) => (
                   <tr key={lead.id} className="hover:bg-white/[0.02] transition-colors group">
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
@@ -127,7 +176,7 @@ export default function LeadsPage() {
                         <Link href={`/leads/${lead.id}/edit`} className="p-2 text-zinc-400 hover:text-primary-400 hover:bg-primary-500/10 rounded-lg transition-colors">
                           <Edit className="w-4 h-4" />
                         </Link>
-                        <button className="p-2 text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors">
+                        <button onClick={() => handleDelete(lead.id)} className="p-2 text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
