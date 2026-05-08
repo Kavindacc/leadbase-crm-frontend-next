@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, use } from "react";
+import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
 import { ArrowLeft, Edit, Mail, Phone, Building, Globe, DollarSign, Clock, Send, MessageSquare, Star, Users, Trophy, XCircle } from "lucide-react";
@@ -19,6 +19,8 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
   const [status, setStatus] = useState("Qualified");
   const [lead, setLead] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [newNote, setNewNote] = useState("");
+  const [notes, setNotes] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchLead = async () => {

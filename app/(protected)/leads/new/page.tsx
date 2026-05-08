@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
@@ -9,6 +9,24 @@ import { ArrowLeft, Save } from "lucide-react";
 export default function CreateLeadPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [salespersons, setSalespersons] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      const token = localStorage.getItem("leadbase_token");
+      try {
+        const res = await fetch("http://localhost:5000/api/auth/users", {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.ok) {
+          setSalespersons(await res.json());
+        }
+      } catch (err) {
+        console.error("Failed to fetch users");
+      }
+    };
+    fetchUsers();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -154,8 +172,10 @@ export default function CreateLeadPage() {
                     name="salesperson"
                     className="w-full h-11 px-4 rounded-lg bg-black/20 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-primary-500/50 transition-all appearance-none"
                   >
-                    <option value="1">Admin User</option>
-                    <option value="2">Jane Doe</option>
+                    {salespersons.map(user => (
+                      <option key={user.id} value={user.id}>{user.name}</option>
+                    ))}
+                    {salespersons.length === 0 && <option value="1">Admin User</option>}
                   </select>
                 </div>
 

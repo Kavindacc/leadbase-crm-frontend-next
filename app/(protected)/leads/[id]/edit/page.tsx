@@ -11,6 +11,7 @@ export default function EditLeadPage({ params }: { params: Promise<{ id: string 
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
+  const [salespersons, setSalespersons] = useState<any[]>([]);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -50,7 +51,23 @@ export default function EditLeadPage({ params }: { params: Promise<{ id: string 
         setIsFetching(false);
       }
     };
+
+    const fetchUsers = async () => {
+      const token = localStorage.getItem("leadbase_token");
+      try {
+        const res = await fetch("http://localhost:5000/api/auth/users", {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.ok) {
+          setSalespersons(await res.json());
+        }
+      } catch (err) {
+        console.error("Failed to fetch users");
+      }
+    };
+
     fetchLeadData();
+    fetchUsers();
   }, [resolvedParams.id]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -217,8 +234,10 @@ export default function EditLeadPage({ params }: { params: Promise<{ id: string 
                     onChange={handleChange}
                     className="w-full h-11 px-4 rounded-lg bg-black/20 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-primary-500/50 transition-all appearance-none"
                   >
-                    <option value="1">Admin User</option>
-                    <option value="2">Jane Doe</option>
+                    {salespersons.map(user => (
+                      <option key={user.id} value={user.id}>{user.name}</option>
+                    ))}
+                    {salespersons.length === 0 && <option value="1">Admin User</option>}
                   </select>
                 </div>
 
