@@ -15,17 +15,6 @@ const stats = [
   { name: "Lost Deals", key: "lostLeads", icon: XCircle, color: "text-rose-500", bg: "bg-rose-500/10" },
 ];
 
-const financialStats = [
-  { name: "Total Pipeline Value", value: "$1,245,000", icon: DollarSign, trend: "+12.5%" },
-  { name: "Won Deal Value", value: "$384,500", icon: DollarSign, trend: "+8.2%" },
-];
-
-const recentLeads = [
-  { id: 1, name: "Alice Freeman", company: "TechFlow Inc", status: "New", value: "$12,000", date: "2 hours ago" },
-  { id: 2, name: "Bob Smith", company: "Growth Labs", status: "Qualified", value: "$45,000", date: "5 hours ago" },
-  { id: 3, name: "Charlie Davis", company: "Venture Corp", status: "Proposal Sent", value: "$8,500", date: "1 day ago" },
-  { id: 4, name: "Diana Prince", company: "Amazon", status: "Won", value: "$120,000", date: "2 days ago" },
-];
 
 const statusColors: Record<string, string> = {
   "New": "bg-blue-500/10 text-blue-400 border-blue-500/20",

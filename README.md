@@ -1,36 +1,107 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LeadBase CRM
 
-## Getting Started
+A modern, fast, and full-stack Customer Relationship Management (CRM) application built for sales teams to track leads, manage pipelines, and close deals efficiently.
 
-First, run the development server:
+This project was built as a full-stack assessment demonstrating frontend UI design, backend API development, database architecture, authentication, and CRUD operations.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Tech Stack
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+**Frontend:**
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Next.js 15 (App Router)** - React framework for building fast web applications.
+- **Tailwind CSS v4** - Utility-first CSS framework for rapid, modern styling.
+- **Lucide React** - Beautiful, consistent icons.
+- **TypeScript** - For type safety and better developer experience.
 
-## Learn More
+**Backend:**
 
-To learn more about Next.js, take a look at the following resources:
+- **Express.js** - Fast, unopinionated Node.js web framework.
+- **Prisma ORM** - Next-generation Node.js and TypeScript ORM.
+- **MySQL** - Relational database for robust data integrity.
+- **JWT & Bcryptjs** - Secure authentication and password hashing.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## How to Run the Project
 
-## Deploy on Vercel
+The application is split into two directories:
+`leadbase-crm-frontend-next` and
+`leadbase-crm-backend-express`.
+You will need to run both concurrently.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Prerequisites
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Node.js (v18+)
+- MySQL Server running locally
+
+### 1. Backend Setup (`leadbase-crm-backend-express`)
+
+1. Open a terminal and navigate to the backend directory.
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Set up your environment variables by creating a `.env` file:
+   ```env
+   DATABASE_URL="mysql://root:yourpassword@localhost:3306/leadbase_db"
+   JWT_SECRET="your_super_secret_jwt_key"
+   PORT=5000
+   ```
+4. Push the Prisma schema to create the database tables and generate the client:
+   ```bash
+   npx prisma db push
+   npx prisma generate
+   ```
+5. **Seed the Database** with the admin, sales team, and dummy leads for testing:
+
+   ```bash
+   # Windows PowerShell
+   Invoke-RestMethod -Uri http://localhost:5000/api/auth/seed -Method POST
+
+   node seedLeads.js
+   ```
+
+6. Start the Express server:
+   ```bash
+   npm run dev
+   ```
+
+### 2. Frontend Setup (`leadbase-crm-frontend-next`)
+
+1. Open a new terminal and navigate to the frontend directory.
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the Next.js development server:
+   ```bash
+   npm run dev
+   ```
+4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+**Test Credentials:**
+
+- Email: `admin@example.com`
+- Password: `password123`
+
+---
+
+## 🧠 Design Decisions & Assumptions
+
+- **Aesthetics & UI/UX**: I prioritized a premium, dark-themed interface with glass-morphism effects and micro-animations. A CRM should not only be functional but also a joy to use. The layout utilizes a fixed sidebar and a responsive grid to ensure data is scannable.
+- **Relational Database**: I chose MySQL over NoSQL because CRM data is inherently relational. A Lead belongs to a User, has many Notes, and has a Status History. Relational integrity is critical here.
+- **Status History Tracking**: Rather than just overwriting a lead's status, I implemented a `LeadStatusHistory` table. This creates a timeline on the Lead Details page, solving a real-world CRM problem: knowing _when_ a lead moved and _who_ moved them.
+- **Custom JWT Authentication**: Instead of using heavy third-party providers (like NextAuth or Auth0), I implemented a lightweight, custom JWT authentication flow via the Express backend to demonstrate my understanding of token-based security, middleware protection, and password hashing.
+
+---
+
+## 🔮 What I Would Add With More Time
+
+If given more time to expand this CRM, I would implement the following features:
+
+1.  **Role-Based Access Control (RBAC)**: Currently, the Admin and Salespersons share the same view. I would restrict Salespersons so they can only view and edit leads assigned to them, while Admins get a bird's-eye view of all pipeline data.
+2.  **Advanced Analytics**: Integrate a charting library (like Recharts) on the Dashboard to show visual trends, such as "Revenue Won per Month" or "Leads by Source" pie charts.
+3.  **Kanban Board View**: Add a Trello-style drag-and-drop Kanban board for managing the pipeline visually, rather than just using a list view.
+4.  **Email Integration**: Allow users to click on an email address and trigger an automated follow-up email directly through the CRM via an API like Resend or SendGrid.
